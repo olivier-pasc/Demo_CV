@@ -8,8 +8,8 @@ This phase focuses on extending the backend API to provide the necessary data fo
 
 - [~] Task: Conductor - Write failing tests for fetching single candidate details API endpoint.
 - [x] Task: Conductor - Implement the backend API endpoint to fetch single candidate details based on ID. (8e007fa)
-- [ ] Task: Conductor - Write failing tests for fetching candidate's job match history API endpoint.
-- [ ] Task: Conductor - Implement the backend API endpoint to fetch a candidate's job match history.
+- [~] Task: Conductor - Write failing tests for fetching candidate's job match history API endpoint.
+- [x] Task: Conductor - Implement the backend API endpoint to fetch a candidate's job match history. (e466751)
 - [ ] Task: Conductor - User Manual Verification 'Backend API for Candidate Details' (Protocol in workflow.md)
 
 ## Phase 2: Frontend Candidate Detail Page
