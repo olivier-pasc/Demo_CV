@@ -67,3 +67,6 @@ coverage/
 
 # Build artifacts
 frontend_dist/
+
+.gemini/
+gha-creds-*.json
