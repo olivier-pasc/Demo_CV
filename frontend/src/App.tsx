@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
 import Matches from './pages/Matches';
+import Candidates from './pages/Candidates';
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="jobs" element={<Jobs />} />
+            <Route path="candidates" element={<Candidates />} />
             <Route path="matches" element={<Matches />} />
           </Route>
         </Routes>

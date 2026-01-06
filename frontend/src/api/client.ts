@@ -19,6 +19,21 @@ export const uploadCV = async (file: File) => {
     return response.data;
 };
 
+export const getCandidates = async () => {
+    const response = await api.get('/candidates/');
+    return response.data;
+};
+
+export const getCandidate = async (id: string) => {
+    const response = await api.get(`/candidates/${id}`);
+    return response.data;
+};
+
+export const deleteCandidate = async (id: string) => {
+    const response = await api.delete(`/candidates/${id}`);
+    return response.data;
+};
+
 export const createJob = async (job: any) => {
     const response = await api.post('/jobs/', job);
     return response.data;

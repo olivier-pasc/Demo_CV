@@ -17,6 +17,9 @@ export default function Layout() {
                         <Link to="/" className="text-base font-semibold text-gray-800 hover:text-randstad-blue transition-colors pb-1 border-b-2 border-transparent hover:border-randstad-blue">
                             Find a job
                         </Link>
+                        <Link to="/candidates" className="text-base font-semibold text-gray-800 hover:text-randstad-blue transition-colors pb-1 border-b-2 border-transparent hover:border-randstad-blue">
+                            Candidates
+                        </Link>
                         <Link to="/jobs" className="text-base font-semibold text-gray-800 hover:text-randstad-blue transition-colors pb-1 border-b-2 border-transparent hover:border-randstad-blue">
                             For employers
                         </Link>

@@ -79,3 +79,31 @@ async def list_candidates():
     for doc in docs:
         candidates.append(doc.to_dict())
     return candidates
+
+@router.get("/{candidate_id}", response_model=Candidate)
+async def get_candidate(candidate_id: str):
+    if not db.get_db():
+        raise HTTPException(status_code=503, detail="Database not available")
+    
+    doc = db.get_db().collection("candidates").document(candidate_id).get()
+    
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    return doc.to_dict()
+
+@router.delete("/{candidate_id}")
+async def delete_candidate(candidate_id: str):
+    if not db.get_db():
+        raise HTTPException(status_code=503, detail="Database not available")
+    
+    doc_ref = db.get_db().collection("candidates").document(candidate_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    # Delete the document
+    doc_ref.delete()
+    
+    return {"message": "Candidate deleted successfully", "id": candidate_id}
