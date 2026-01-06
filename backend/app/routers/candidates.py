@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services import storage, db, ai
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import pypdf
 import io
 import uuid
@@ -16,6 +16,14 @@ class Candidate(BaseModel):
     skills: List[str]
     cv_url: Optional[str]
     extracted_data: dict
+    created_at: str
+
+class Match(BaseModel):
+    id: str
+    candidate_id: str
+    job_id: str
+    score: float
+    analysis: Dict[str, Any]
     created_at: str
 
 @router.post("/upload", response_model=Candidate)
@@ -91,6 +99,20 @@ async def get_candidate(candidate_id: str):
         raise HTTPException(status_code=404, detail="Candidate not found")
     
     return doc.to_dict()
+
+@router.get("/{candidate_id}/matches", response_model=List[Match])
+async def get_candidate_matches(candidate_id: str):
+    if not db.get_db():
+        raise HTTPException(status_code=503, detail="Database not available")
+    
+    # Query the 'matches' collection for documents where candidate_id matches
+    matches_ref = db.get_db().collection("matches").where("candidate_id", "==", candidate_id).stream()
+    
+    matches = []
+    for doc in matches_ref:
+        matches.append(doc.to_dict())
+        
+    return matches
 
 @router.delete("/{candidate_id}")
 async def delete_candidate(candidate_id: str):
