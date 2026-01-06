@@ -6,8 +6,8 @@ This plan outlines the steps to implement the "Candidate detail view with a full
 
 This phase focuses on extending the backend API to provide the necessary data for the candidate detail view.
 
-- [ ] Task: Conductor - Write failing tests for fetching single candidate details API endpoint.
-- [ ] Task: Conductor - Implement the backend API endpoint to fetch single candidate details based on ID.
+- [~] Task: Conductor - Write failing tests for fetching single candidate details API endpoint.
+- [x] Task: Conductor - Implement the backend API endpoint to fetch single candidate details based on ID. (8e007fa)
 - [ ] Task: Conductor - Write failing tests for fetching candidate's job match history API endpoint.
 - [ ] Task: Conductor - Implement the backend API endpoint to fetch a candidate's job match history.
 - [ ] Task: Conductor - User Manual Verification 'Backend API for Candidate Details' (Protocol in workflow.md)
