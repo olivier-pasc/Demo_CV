@@ -44,6 +44,11 @@ export const getJobs = async () => {
     return response.data;
 };
 
+export const deleteJob = async (id: string) => {
+    const response = await api.delete(`/jobs/${id}`);
+    return response.data;
+};
+
 export const getMatches = async (jobId: string) => {
     const response = await api.post(`/matches/match/${jobId}`);
     return response.data;

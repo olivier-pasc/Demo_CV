@@ -38,3 +38,20 @@ async def list_jobs():
     for doc in docs:
         jobs.append(doc.to_dict())
     return jobs
+
+@router.delete("/{job_id}")
+async def delete_job(job_id: str):
+    if not db.get_db():
+        raise HTTPException(status_code=503, detail="Database not available")
+    
+    doc_ref = db.get_db().collection("jobs").document(job_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Delete the document
+    doc_ref.delete()
+    
+    return {"message": "Job deleted successfully", "id": job_id}
+

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getJobs, createJob } from '../api/client';
+import { getJobs, createJob, deleteJob } from '../api/client';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
-import { Plus, Briefcase, Calendar, X } from 'lucide-react';
+import { Plus, Briefcase, Calendar, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Jobs() {
@@ -13,6 +13,7 @@ export default function Jobs() {
 
     const [newJob, setNewJob] = useState({ title: '', description: '', requirements: '' });
     const [isCreating, setIsCreating] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
     const mutation = useMutation({
         mutationFn: createJob,
@@ -23,12 +24,24 @@ export default function Jobs() {
         },
     });
 
+    const deleteMutation = useMutation({
+        mutationFn: deleteJob,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['jobs'] });
+            setDeleteConfirm(null);
+        },
+    });
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         mutation.mutate({
             ...newJob,
             requirements: newJob.requirements.split(',').map(r => r.trim()).filter(Boolean),
         });
+    };
+
+    const handleDelete = (id: string) => {
+        deleteMutation.mutate(id);
     };
 
     return (
@@ -156,13 +169,24 @@ export default function Jobs() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-400 pt-4 border-t border-gray-100 mt-auto">
-                                    <Calendar size={14} />
-                                    Posted: {new Date(job.created_at).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                        <Calendar size={14} />
+                                        Posted: {new Date(job.created_at).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteConfirm(job.id);
+                                        }}
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </Card>
                         </motion.div>
@@ -178,6 +202,52 @@ export default function Jobs() {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {deleteConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setDeleteConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+                        >
+                            <div className="text-center">
+                                <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                    <Trash2 className="text-red-600" size={32} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-randstad-dark mb-2">Delete Job Posting?</h3>
+                                <p className="text-gray-600 mb-6">
+                                    This action cannot be undone. The job posting will be permanently removed.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setDeleteConfirm(null)}
+                                        className="flex-1 px-6 py-3 rounded-full border-2 border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <Button
+                                        onClick={() => handleDelete(deleteConfirm)}
+                                        disabled={deleteMutation.isPending}
+                                        className="flex-1 bg-red-600 hover:bg-red-700"
+                                    >
+                                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
