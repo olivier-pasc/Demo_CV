@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement the "Candidate detail view with a full profile" track. It adheres to the project's workflow, including Test-Driven Development (TDD) and phase-based verification.
 
-## Phase 1: Backend API for Candidate Details
+## Phase 1: Backend API for Candidate Details [checkpoint: 55baf39]
 
 This phase focuses on extending the backend API to provide the necessary data for the candidate detail view.
 
@@ -10,7 +10,7 @@ This phase focuses on extending the backend API to provide the necessary data fo
 - [x] Task: Conductor - Implement the backend API endpoint to fetch single candidate details based on ID. (8e007fa)
 - [~] Task: Conductor - Write failing tests for fetching candidate's job match history API endpoint.
 - [x] Task: Conductor - Implement the backend API endpoint to fetch a candidate's job match history. (e466751)
-- [ ] Task: Conductor - User Manual Verification 'Backend API for Candidate Details' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Backend API for Candidate Details' (Protocol in workflow.md)
 
 ## Phase 2: Frontend Candidate Detail Page
 
