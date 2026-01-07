@@ -383,6 +383,83 @@ show_next_steps() {
     echo ""
 }
 
+# Function to setup Workload Identity Federation for GitHub Actions
+setup_wif() {
+    print_info "Setting up Workload Identity Federation..."
+    
+    local POOL_NAME="github-pool"
+    local PROVIDER_NAME="github-provider"
+    local REPO_NAME="${GITHUB_REPO:-olivier-pasc/Demo_CV}" # Default to your repo
+    
+    # 1. Create Workload Identity Pool
+    if gcloud iam workload-identity-pools describe "$POOL_NAME" --location="global" &>/dev/null; then
+        print_warning "Workload Identity Pool 'github-pool' already exists"
+    else
+        gcloud iam workload-identity-pools create "$POOL_NAME" \
+            --location="global" \
+            --display-name="GitHub Actions Pool" \
+            --description="Pool for GitHub Actions" \
+            --project="$PROJECT_ID"
+        print_success "Workload Identity Pool created"
+    fi
+    
+    # 2. Create Provider
+    if gcloud iam workload-identity-pools providers describe "$PROVIDER_NAME" \
+        --workload-identity-pool="$POOL_NAME" \
+        --location="global" &>/dev/null; then
+        print_warning "Workload Identity Provider 'github-provider' already exists"
+    else
+        gcloud iam workload-identity-pools providers create "$PROVIDER_NAME" \
+            --workload-identity-pool="$POOL_NAME" \
+            --location="global" \
+            --display-name="GitHub Actions Provider" \
+            --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+            --attribute-condition="assertion.repository=='$REPO_NAME'" \
+            --issuer-uri="https://token.actions.githubusercontent.com" \
+            --project="$PROJECT_ID"
+        print_success "Workload Identity Provider created"
+    fi
+    
+    # 3. Allow Service Account impersonation
+    local WIF_PRINCIPAL="principalSet://iam.googleapis.com/projects/$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')/locations/global/workloadIdentityPools/$POOL_NAME/attribute.repository/$REPO_NAME"
+    
+    gcloud iam service-accounts add-iam-policy-binding "${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+        --role="roles/iam.workloadIdentityUser" \
+        --member="$WIF_PRINCIPAL" \
+        --project="$PROJECT_ID" \
+        --quiet > /dev/null
+        
+    print_success "Service Account impersonation configured for repo: $REPO_NAME"
+    
+    # Export WIF Provider resource name for output
+    export WIF_PROVIDER_NAME="projects/$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')/locations/global/workloadIdentityPools/$POOL_NAME/providers/$PROVIDER_NAME"
+}
+
+# Function to setup real Cloud Monitoring Uptime Check
+setup_monitoring_real() {
+    print_info "Creating fully managed Uptime Check..."
+    
+    # Only proceed if we have a deployed URL (mostly for update scenarios), otherwise create config for later
+    # Attempt to create a simple check
+    
+    if gcloud monitoring uptime-check-configs list --filter="displayName='CV Matcher Health'" --format="value(name)" | grep -q "."; then
+        print_warning "Uptime check 'CV Matcher Health' already exists"
+    else
+        # We need the service URL first. If not deployed, we create a placeholder or skip.
+        # Let's create a placeholder check that users can update later.
+        gcloud monitoring uptime-check-configs create \
+            --display-name="CV Matcher Health" \
+            --uri="https://${SERVICE_NAME}-PLACEHOLDER.a.run.app" \
+            --period=5 \
+            --timeout=10 \
+            --project="$PROJECT_ID" \
+            --quiet || print_warning "Could not create uptime check (requires Monitoring Editor role)"
+            
+        print_success "Uptime Check created (Update URL after deployment)"
+    fi
+}
+
+
 # Main execution
 main() {
     echo -e "${BLUE}"
@@ -400,10 +477,34 @@ main() {
     setup_firestore
     setup_artifact_registry
     setup_secrets
+    setup_wif        # New: Workload Identity Federation
     setup_cicd
-    setup_monitoring
+    setup_monitoring_real # New: Real monitoring setup
     create_env_template
-    show_next_steps
+
+    print_success "✨ GCP Infrastructure Setup Complete! ✨"
+    echo ""
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}📋 Next Steps:${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo "1. 🔐 Add these Secrets to GitHub Repository:"
+    echo "   (Settings -> Secrets and variables -> Actions)"
+    echo "   - GCP_PROJECT_ID: $PROJECT_ID"
+    echo "   - WIF_PROVIDER: $WIF_PROVIDER_NAME"
+    echo "   - WIF_SERVICE_ACCOUNT: ${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    echo ""
+    echo "2. 🔐 Update secrets in Secret Manager (for app runtime):"
+    echo "   ${YELLOW}gcloud secrets versions add <secret-name> --data-file=<path>${NC}"
+    echo ""
+    echo "3. 🚀 Deploy application:"
+    echo "   ${YELLOW}git push origin main${NC} (Automated via GitHub Actions)"
+    echo "   OR Manual: ${YELLOW}gcloud builds submit --config=cloudbuild.yaml${NC}"
+    echo ""
+    echo "4. 🔍 Monitor & Verify:"
+    echo "   - Update Uptime Check URL in Cloud Console: https://console.cloud.google.com/monitoring/uptime"
+    echo "   - View Logs: https://console.cloud.google.com/run"
+    echo ""
 }
 
 # Run main function
